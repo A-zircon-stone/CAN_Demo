@@ -21,7 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "canio.h"
+#include "timer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,7 +44,7 @@
 CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN PV */
-
+GM6020_Feedback_t motor2;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -91,6 +92,9 @@ int main(void)
   MX_CAN1_Init();
   /* USER CODE BEGIN 2 */
 
+  Timer_Init();
+  CAN_Init();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -100,6 +104,12 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    CAN_Receive(&motor2);              // 非阻塞: 有数据就更新motor2
+
+    if (flag_2ms) {
+        flag_2ms = 0;
+        CAN_Send(0x1FE, 0, 1000, 0, 0);  // 给电机2发电流1000
+    }
   }
   /* USER CODE END 3 */
 }
