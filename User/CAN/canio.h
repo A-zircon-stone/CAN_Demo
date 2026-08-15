@@ -6,6 +6,10 @@
 #ifndef CAN_DEMO_CANIO_H
 #define CAN_DEMO_CANIO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
     int16_t Angle;         // 机械角度 0~8191
     int16_t Speed;         // 转速 (RPM)
@@ -17,5 +21,9 @@ void CAN_Init();
 void CAN_Send(int16_t ID, int16_t Mess_1, int16_t Mess_2, int16_t Mess_3, int16_t Mess_4);
 void CAN_Receive(GM6020_Feedback_t *feedback);
 #define Motor_2 0x206
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //CAN_DEMO_CANIO_H
