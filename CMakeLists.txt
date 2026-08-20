@@ -38,7 +38,9 @@ add_executable(${CMAKE_PROJECT_NAME}
         User/Timer/timer.c
         User/Timer/timer.h
         User/PID/PID.cpp
-        User/PID/PID.hpp)
+        User/PID/PID.hpp
+        User/Task/Gimbal.cpp
+        User/Task/Print.cpp)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
@@ -53,6 +55,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     User/CAN/canio.c
     User/Timer/timer.c
     User/PID/PID.cpp
+    User/Task/Gimbal.cpp
+    User/Task/Print.cpp
     Core/Src/main.cpp
 )
 
@@ -61,6 +65,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         User/CAN
         User/Timer
         User/PID
+        User/Task
 )
 
 # Add project symbols (macros)

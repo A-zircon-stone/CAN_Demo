@@ -5,11 +5,19 @@
 #include "gpio.h"
 #include "canio.h"
 #include "timer.h"
-#include "PID.hpp"
-
+#include "cmsis_os.h"
 
 /* 外部函数：SystemClock_Config 定义在 CubeMX 生成的 main.c 里 */
 extern "C" void SystemClock_Config(void);
+
+/* FreeRTOS 初始化函数（CubeMX 生成在 freertos.c 里） */
+extern "C" void MX_FREERTOS_Init(void);
+
+/* 全局变量：电机2反馈（中断回调里收数据，main循环里读数据） */
+extern "C" {
+GM6020_Feedback_t motor2;
+}
+
 
 /**
   * @brief  The application entry point.
@@ -28,24 +36,15 @@ int main(void)
   MX_CAN1_Init();
   MX_USART1_UART_Init();
 
-  GM6020_Feedback_t motor2;
   Timer_Init();   // 2ms 定时中断
   CAN_Init();     // CAN 滤波器 + 启动
-PIDc pid;                                // 对象
-pid.PID_Init(&pid.SpdParam, 0.0f, 0.0f, 0.0f);  // 初始化速度环
-pid.PID_Init(&pid.PosParam, 0.0f, 0.0f, 0.0f);  // 初始化位置环
+
+  osKernelInitialize();   // 初始化 FreeRTOS 内核
+  MX_FREERTOS_Init();     // 创建任务
+  osKernelStart();        // 启动调度器（之后不再返回）
 
   /* Infinite loop */
   while (1)
   {
-    if (flag_2ms) {
-      flag_2ms = 0;
-
-      CAN_Receive(&motor2);              // 非阻塞: 有数据就更新motor2
-float SpdActual = pid.SingleLoop_PID(&pid.PosParam, (float)motor2.Angle, 200.0f);  // 接收到角度，放入Input（Actual）
-float Spdout    = pid.SingleLoop_PID(&pid.SpdParam, (float)motor2.Speed, SpdActual);
-
-    CAN_Send(0x1FE, 0, (int16_t)Spdout, 0, 0);  // 给电机2发Spdout
-    }
   }
 }

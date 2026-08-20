@@ -6,6 +6,7 @@
 #include "stm32f4xx.h"
 #include <stdint.h>
 extern CAN_HandleTypeDef hcan1;
+extern GM6020_Feedback_t motor2;
 
 void CAN_Init()
 {
@@ -22,6 +23,7 @@ void CAN_Init()
     CAN_Filter.SlaveStartFilterBank = 0;
     HAL_CAN_ConfigFilter(&hcan1, &CAN_Filter);
     HAL_CAN_Start(&hcan1);
+    HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 }
 void CAN_Send(int16_t ID, int16_t Mess_1, int16_t Mess_2, int16_t Mess_3, int16_t Mess_4)
 {
@@ -46,10 +48,6 @@ void CAN_Send(int16_t ID, int16_t Mess_1, int16_t Mess_2, int16_t Mess_3, int16_
 
 void CAN_Receive(GM6020_Feedback_t *feedback)
 {
-    // 查 FIFO0 有没有数据，没有直接返回
-    if (HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO0) == 0) {
-        return;
-    }
 
     CAN_RxHeaderTypeDef RxHeader;
     uint8_t CAN_Rx_Mess[8];
@@ -69,4 +67,11 @@ void CAN_Receive(GM6020_Feedback_t *feedback)
     default:
         break;
     }
+}
+
+/*
+ * @brief Init函数中这路CAN配置FIFO0邮箱，使用对应回调函数接收，跳转对应接收函数
+ */
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
+    CAN_Receive(&motor2);
 }
