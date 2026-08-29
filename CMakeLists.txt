@@ -40,7 +40,10 @@ add_executable(${CMAKE_PROJECT_NAME}
         User/PID/PID.cpp
         User/PID/PID.hpp
         User/Task/Gimbal.cpp
-        User/Task/Print.cpp)
+        User/Task/Print.cpp
+        User/PID/Debug.cpp
+        User/PID/Debug.hpp
+)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
@@ -58,6 +61,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     User/Task/Gimbal.cpp
     User/Task/Print.cpp
     Core/Src/main.cpp
+    Core/Startup/startup_stm32f407xx.s
 )
 
 # Add include paths

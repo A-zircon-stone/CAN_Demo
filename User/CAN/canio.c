@@ -6,20 +6,20 @@
 #include "stm32f4xx.h"
 #include <stdint.h>
 extern CAN_HandleTypeDef hcan1;
-extern GM6020_Feedback_t motor2;
+
 
 void CAN_Init()
 {
     CAN_FilterTypeDef CAN_Filter;
+    CAN_Filter.FilterActivation = CAN_FILTER_ENABLE;    //启用过滤器
     CAN_Filter.FilterBank = 0;//CAN1 有 14 个滤波器（编号 0~13）
     CAN_Filter.FilterMode = CAN_FILTERMODE_IDMASK;
     CAN_Filter.FilterScale = CAN_FILTERSCALE_16BIT;
-    CAN_Filter.FilterIdHigh = Motor_2 << 5;
-    CAN_Filter.FilterIdLow = Motor_2 << 5;
-    CAN_Filter.FilterMaskIdHigh = 0x7FF << 5;
-    CAN_Filter.FilterMaskIdLow = 0x7FF << 5;
+    CAN_Filter.FilterIdHigh = Motor_1 << 5;
+    CAN_Filter.FilterIdLow = Motor_1 << 5;
+    CAN_Filter.FilterMaskIdHigh = 0x000 << 5;
+    CAN_Filter.FilterMaskIdLow = 0x000 << 5;
     CAN_Filter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
-    CAN_Filter.FilterActivation = ENABLE;
     CAN_Filter.SlaveStartFilterBank = 0;
     HAL_CAN_ConfigFilter(&hcan1, &CAN_Filter);
     HAL_CAN_Start(&hcan1);
@@ -46,7 +46,7 @@ void CAN_Send(int16_t ID, int16_t Mess_1, int16_t Mess_2, int16_t Mess_3, int16_
     HAL_CAN_AddTxMessage(&hcan1, &TxHeader, CAN_Tx_Mess, &Send_Mailbox);//调用hal发送函数
 }
 
-void CAN_Receive(GM6020_Feedback_t *feedback)
+void CAN_Receive(GM6020_Feedback_t *feedback,GM6020_Feedback_t *feedback2)
 {
 
     CAN_RxHeaderTypeDef RxHeader;
@@ -63,7 +63,12 @@ void CAN_Receive(GM6020_Feedback_t *feedback)
         feedback->Current     = (int16_t)((CAN_Rx_Mess[4] << 8) | CAN_Rx_Mess[5]);
         feedback->Temperature = CAN_Rx_Mess[6];
         break;
-
+    case Motor_1:
+        feedback2->Angle       = (int16_t)((CAN_Rx_Mess[0] << 8) | CAN_Rx_Mess[1]);
+        feedback2->Speed       = (int16_t)((CAN_Rx_Mess[2] << 8) | CAN_Rx_Mess[3]);
+        feedback2->Current     = (int16_t)((CAN_Rx_Mess[4] << 8) | CAN_Rx_Mess[5]);
+        feedback2->Temperature = CAN_Rx_Mess[6];
+        break;
     default:
         break;
     }
@@ -73,5 +78,6 @@ void CAN_Receive(GM6020_Feedback_t *feedback)
  * @brief Init函数中这路CAN配置FIFO0邮箱，使用对应回调函数接收，跳转对应接收函数
  */
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
-    CAN_Receive(&motor2);
+
+   CAN_Receive(&motor2,&motor1);
 }
