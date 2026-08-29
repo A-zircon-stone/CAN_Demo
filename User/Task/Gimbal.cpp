@@ -28,7 +28,7 @@ static int16_t GM6020_AngleError(int16_t target, int16_t actual)
 extern "C" void Gimbal_Task(void *argument)
 {
     pid.PID_Init(&pid.SpdParam, 20.0f, 0.002f, 0.0f);
-    pid.PID_Init(&pid.PosParam, 0.3f, 0.001f, 0.0f);
+    pid.PID_Init(&pid.PosParam, 0.3f, 0.005f, 0.0f);
 
     pid.PosParam.PID_OutMax = 200;       // 位置环最大输出速度，先限制到 ±200rpm
     pid.PosParam.PID_OutStep = 5;        // 目标速度变化别太猛
