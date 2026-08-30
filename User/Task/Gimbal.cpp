@@ -22,9 +22,9 @@ extern "C" void Gimbal_Task(void *argument)
 
     yaw.set_angle_min(1200);
     pitch.init(&motor1);
- yaw.set_angle_max(7880);
+ pitch.set_angle_max(7880);
 
- yaw.set_angle_min(2880);
+ pitch .set_angle_min(2880);
     uart1_rx_start();
 
 

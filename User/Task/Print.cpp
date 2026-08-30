@@ -1,3 +1,4 @@
+#include "board.hpp"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "usart.h"
@@ -30,11 +31,29 @@ extern "C" void Printf_Task(void * argument)
               yaw.get_angle(),
               pitch.get_target_angle(),
               pitch.get_angle()
+
               );
 
         // usart_printf("%d\r\n",
         //
         //      motor1.Angle);
+
+
+        static uint16_t cnt = 0;
+
+        if (BOARD_ROLE == BOARD_ROLE_MASTER)
+        {
+            cnt++;
+            if (cnt >= 50)   // 50次 * 20ms = 1s
+            {
+                cnt = 0;
+                CAN_Send(BoardHello , 0, 0, 0, 0);
+                int16_t angle_cdeg = 1234;   // 12.34°
+                CAN_Send(Board_Angle1, angle_cdeg, 0, 0, 0);
+            }
+
+        }
+        usart_printf("link:%u\r\n", board_link_ok);
         vTaskDelayUntil(&CurrentTime, 20/ portTICK_RATE_MS);  //每20ms执行一次（50Hz）
     }
 }

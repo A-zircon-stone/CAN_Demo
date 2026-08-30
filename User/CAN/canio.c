@@ -5,8 +5,9 @@
 #include "canio.h"
 #include "stm32f4xx.h"
 #include <stdint.h>
+#include "board.hpp"
 extern CAN_HandleTypeDef hcan1;
-
+volatile int16_t board_angle2 = 0;
 
 void CAN_Init()
 {
@@ -69,6 +70,31 @@ void CAN_Receive(GM6020_Feedback_t *feedback,GM6020_Feedback_t *feedback2)
         feedback2->Current     = (int16_t)((CAN_Rx_Mess[4] << 8) | CAN_Rx_Mess[5]);
         feedback2->Temperature = CAN_Rx_Mess[6];
         break;
+    case BoardHello:
+        if (BOARD_ROLE == BOARD_ROLE_SLAVE)
+        {
+            CAN_Send(BoardRespect , 0, 0, 0, 0);
+        }
+        break;
+
+    case BoardRespect:
+        board_link_ok = 1;
+        break;
+    case Board_Angle1:
+        {
+            int16_t angle_cdeg = (int16_t)((CAN_Rx_Mess[0] << 8) | CAN_Rx_Mess[1]);
+
+            float rad = angle_cdeg / 100.0f * 3.1415926f / 180.0f;
+
+
+            CAN_Send(Board_Angle2, rad, 0, 0, 0);
+            break;
+        }
+    case Board_Angle2:
+        {
+            board_angle2 = (int16_t)((CAN_Rx_Mess[0] << 8) | CAN_Rx_Mess[1]);
+            break;
+        }
     default:
         break;
     }

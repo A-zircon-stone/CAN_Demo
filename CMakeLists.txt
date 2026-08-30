@@ -44,6 +44,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         User/PID/Debug.cpp
         User/PID/Debug.hpp
         User/Task/GimbalAxis.hpp
+        User/CAN/board.cpp
+        User/CAN/board.hpp
 )
 
 # Add STM32CubeMX generated sources
