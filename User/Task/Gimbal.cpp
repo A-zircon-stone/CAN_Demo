@@ -3,6 +3,7 @@
 #include "canio.h"
 #include "PID.hpp"
 #include "GimbalAxis.hpp"
+#include "Debug.hpp"
 
 /* 电机2反馈（main.cpp 里定义，CAN中断回调更新） */
 extern "C" GM6020_Feedback_t motor2;
@@ -10,18 +11,24 @@ volatile int16_t g_spdout = 0;
 
 
 static PIDc pid;                                // 对象
-static Gimbal_Axis yaw;
+Gimbal_Axis yaw;
+ Gimbal_Axis pitch;
 
 /* 电机控制任务：每2ms执行一次（500Hz） */
 extern "C" void Gimbal_Task(void *argument)
-{yaw.init(&motor2);
-    yaw.set_target_angle(200);
-    //yaw.set_angle_max();
+{   yaw.init(&motor2);
+    yaw.set_target_angle(4000);
+    yaw.set_angle_max(6880);
 
-    //yaw.set_angle_min();
+    yaw.set_angle_min(1200);
+    pitch.init(&motor1);
+ yaw.set_angle_max(7880);
 
-    int16_t out = yaw.Axiscontrol();
-    //CAN_Send(0x1FE, 0, out, 0, 0);}
+ yaw.set_angle_min(2880);
+    uart1_rx_start();
+
+
+
 //     pid.PID_Init(&pid.SpdParam, 20.0f, 0.002f, 0.0f);
 //     pid.PID_Init(&pid.PosParam, 0.3f, 0.005f, 0.0f);
 //
@@ -51,7 +58,10 @@ extern "C" void Gimbal_Task(void *argument)
 
         //g_spdout = (int16_t)Spdout;
 
-        CAN_Send(0x1FE, 1500, 1500, 1500, 1500); // 给电机2发Spdout
+        //CAN_Send(0x1FE, 1500, 1500, 1500, 1500); // 给电机2发Spdout
+        int16_t out = yaw.Axiscontrol();
+     int16_t out_ = pitch.Axiscontrol();
+        CAN_Send(0x1FE, out_, out, 0, 0);
 
         vTaskDelayUntil(&CurrentTime, 2/ portTICK_RATE_MS); 
     }// 每2ms执行一次（500Hz）

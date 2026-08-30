@@ -10,6 +10,7 @@
 #include <string>
 
 void usart_printf(const char *format, ...);
+void uart1_rx_start(void);
 
 
 

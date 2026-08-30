@@ -56,6 +56,9 @@ int16_t Axiscontrol()
 
 }
 
+    int16_t get_target_angle() const { return target_angle; }
+
+
 private:
     static int16_t angleError(int16_t target, int16_t actual)
     {
@@ -73,6 +76,9 @@ private:
     PIDc pid_;
 
 };
+
+extern Gimbal_Axis yaw;
+extern Gimbal_Axis pitch;
 
 
 
