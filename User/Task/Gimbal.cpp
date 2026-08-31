@@ -18,13 +18,13 @@ Gimbal_Axis yaw;
 extern "C" void Gimbal_Task(void *argument)
 {   yaw.init(&motor2);
     yaw.set_target_angle(4000);
-    yaw.set_angle_max(6880);
+    yaw.set_angle_max(6800);
 
-    yaw.set_angle_min(1200);
+    yaw.set_angle_min(1350);
     pitch.init(&motor1);
- pitch.set_angle_max(7880);
+ pitch.set_angle_max(7800);
 
- pitch .set_angle_min(2880);
+ pitch .set_angle_min(3050);
     uart1_rx_start();
 
 

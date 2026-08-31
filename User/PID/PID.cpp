@@ -108,4 +108,8 @@ void PIDc::PID_Clear(){
     PosParam.PID_Err_all = 0.0f;
     PosParam.PID_Err_last = 0.0f;
     PosParam.PID_Out = 0.0f;
+
+    //补一个
+    SpdParam .PID_lastout = 0.0f;
+    PosParam.PID_lastout = 0.0f;
 }

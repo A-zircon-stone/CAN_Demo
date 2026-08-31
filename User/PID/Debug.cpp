@@ -12,6 +12,7 @@
 static uint8_t send_buf[TX_BUF_SIZE];
 static uint8_t uart1_rx_buf[RX_BUF_SIZE];
 static volatile uint8_t uart1_tx_busy = 0;
+volatile uint8_t g_protected_mode = 0;
 
 void uart1_rx_start(void)
 {
@@ -40,25 +41,56 @@ static void uart1_parse_rx(const uint8_t *data, uint16_t len)
         ++p;
     }
 
+    char *end = p + strlen(p);
+    while (end > p && (end[-1] == ' ' || end[-1] == '\r' || end[-1] == '\n' || end[-1] == '\t'))
+    {
+        --end;
+    }
+    *end = '\0';
+
     int value = 0;
-    if (sscanf(p, "yaw:%d", &value) == 1 ||
-        sscanf(p, "yaw=%d", &value) == 1 ||
-        sscanf(p, "y:%d", &value) == 1 ||
-        sscanf(p, "y=%d", &value) == 1)
+    int yaw_spd = 0;
+    int pitch_spd = 0;
+
+    if (strcmp(p, "Protected Mode") == 0 || strcmp(p, "protected mode") == 0)
+    {
+        g_protected_mode = 1;
+        yaw.emergency_stop();
+        pitch.emergency_stop();
+    }
+    else if (strcmp(p, "Normal Mode") == 0 || strcmp(p, "normal mode") == 0)
+    {
+        g_protected_mode = 0;
+    }
+    else if (g_protected_mode)
+    {
+        return;
+    }
+    else if (sscanf(p, "spd %d %d", &yaw_spd, &pitch_spd) == 2)
+    {
+        yaw.set_speed_cmd((int16_t)yaw_spd);
+        pitch.set_speed_cmd((int16_t)pitch_spd);
+
+        yaw.set_speed_mode(true);
+        pitch.set_speed_mode(true);
+    }
+    else if (strcmp(p, "pos") == 0)
+    {
+        yaw.set_target_angle(yaw.get_angle());
+        pitch.set_target_angle(pitch.get_angle());
+
+        yaw.set_speed_mode(false);
+        pitch.set_speed_mode(false);
+    }
+    else if (sscanf(p, "yaw:%d", &value) == 1 || sscanf(p, "yaw=%d", &value) == 1)
     {
         yaw.set_target_angle((int16_t)value);
     }
-    else if (sscanf(p, "pitch:%d", &value) == 1 ||
-             sscanf(p, "pitch=%d", &value) == 1 ||
-             sscanf(p, "p:%d", &value) == 1 ||
-             sscanf(p, "p=%d", &value) == 1)
+    else if (sscanf(p, "pitch:%d", &value) == 1 || sscanf(p, "pitch=%d", &value) == 1)
     {
         pitch.set_target_angle((int16_t)value);
     }
-    else if (sscanf(p, "%d", &value) == 1)
-    {
-        yaw.set_target_angle((int16_t)value);
-    }
+    
 }
 
 void usart_printf(const char *format, ...)

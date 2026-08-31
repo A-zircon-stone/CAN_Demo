@@ -82,12 +82,17 @@ void CAN_Receive(GM6020_Feedback_t *feedback,GM6020_Feedback_t *feedback2)
         break;
     case Board_Angle1:
         {
-            int16_t angle_cdeg = (int16_t)((CAN_Rx_Mess[0] << 8) | CAN_Rx_Mess[1]);
+            if (BOARD_ROLE == BOARD_ROLE_SLAVE)
+            {
+                int16_t angle_cdeg = (int16_t)((CAN_Rx_Mess[0] << 8) | CAN_Rx_Mess[1]);
 
-            float rad = angle_cdeg / 100.0f * 3.1415926f / 180.0f;
+                float rad = angle_cdeg / 100.0f * 3.1415926f / 180.0f;
 
 
-            CAN_Send(Board_Angle2, rad, 0, 0, 0);
+                int16_t rad_mrad = (int16_t)(rad * 1000.0f);
+
+                CAN_Send(Board_Angle2, rad_mrad, 0, 0, 0);
+            }
             break;
         }
     case Board_Angle2:
