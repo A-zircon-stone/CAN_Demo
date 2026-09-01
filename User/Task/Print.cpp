@@ -26,39 +26,40 @@ extern "C" void Printf_Task(void * argument)
                      // (int)motor2.Angle);
         //char uint8_t unsighed char?好吧不太懂这些类型。。。
       //usart_printf("RM2027\r\n");
-        usart_printf("%d,%d,%d,%d,%d,%d,%d,%d\r\n",
-              yaw.get_target_angle(),
-              yaw.get_angle(),
-              pitch.get_target_angle(),
-              pitch.get_angle(),
-              yaw.get_actual_speed(),
-              pitch.get_actual_speed(),
-              yaw.Axiscontrol(),
-              pitch.Axiscontrol()
-
-
-              );
+        // usart_printf("%d,%d,%d,%d,%d,%d,%d,%d\r\n",
+        //       yaw.get_target_angle(),
+        //       yaw.get_angle(),
+        //       pitch.get_target_angle(),
+        //       pitch.get_angle(),
+        //       yaw.get_actual_speed(),
+        //       pitch.get_actual_speed(),
+        //       yaw.Axiscontrol(),
+        //       pitch.Axiscontrol()
+        //
+        //
+        //       );
 
         // usart_printf("%d\r\n",
         //
         //      motor1.Angle);
 
 
-        // static uint16_t cnt = 0;
-        //
-        // if (BOARD_ROLE == BOARD_ROLE_MASTER)
-        // {
-        //     cnt++;
-        //     if (cnt >= 50)   // 50次 * 20ms = 1s
-        //     {
-        //         cnt = 0;
-        //         CAN_Send(BoardHello , 0, 0, 0, 0);
-        //         int16_t angle_cdeg = 1234;   // 12.34°
-        //         //CAN_Send(Board_Angle1, angle_cdeg, 0, 0, 0);
-        //     }
-        //
-        // }
-        // usart_printf("link:%u\r\n", board_link_ok);//判断链路是否正常
+        int16_t send_angle_cdeg = 1234;
+        int16_t send_rad_mrad   = 215;
+
+        if (BOARD_ROLE == BOARD_ROLE_MASTER)
+        {
+            CAN_Send(BoardHello, 0, 0, 0, 0);
+            CAN_Send(Board_Angle1, send_angle_cdeg, 0, 0, 0);
+            CAN_Send(Board_Angle3, send_rad_mrad, 0, 0, 0);
+        }
+
+        usart_printf("link:%u, angle_send=%d, rad_recv=%d, rad_send=%d, angle_recv=%d\r\n",
+                     board_link_ok,
+                     send_angle_cdeg,
+                     board_angle2,
+                     send_rad_mrad,
+                     board_angle4);
         vTaskDelayUntil(&CurrentTime, 20/ portTICK_RATE_MS);  //每20ms执行一次（50Hz）
     }
 }

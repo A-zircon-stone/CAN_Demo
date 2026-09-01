@@ -8,6 +8,7 @@
 #include "board.hpp"
 extern CAN_HandleTypeDef hcan1;
 volatile int16_t board_angle2 = 0;
+volatile int16_t board_angle4 = 0;
 
 void CAN_Init()
 {
@@ -95,9 +96,28 @@ void CAN_Receive(GM6020_Feedback_t *feedback,GM6020_Feedback_t *feedback2)
             }
             break;
         }
+
     case Board_Angle2:
         {
             board_angle2 = (int16_t)((CAN_Rx_Mess[0] << 8) | CAN_Rx_Mess[1]);
+            break;
+        }
+    case Board_Angle3:
+        {
+            if (BOARD_ROLE == BOARD_ROLE_SLAVE)
+            {
+                int16_t rad_mrad = (int16_t)((CAN_Rx_Mess[0] << 8) | CAN_Rx_Mess[1]);
+
+                float rad = rad_mrad / 1000.0f;
+                int16_t deg = (int16_t)(rad * 180.0f / 3.1415926f * 10.0f + (rad >= 0 ? 0.5f : -0.5f));
+
+                CAN_Send(Board_Angle4, deg, 0, 0, 0);
+            }
+            break;
+        }
+    case Board_Angle4:
+        {
+            board_angle4 = (int16_t)((CAN_Rx_Mess[0] << 8) | CAN_Rx_Mess[1]);
             break;
         }
     default:

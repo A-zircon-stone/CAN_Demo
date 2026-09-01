@@ -61,7 +61,7 @@ extern "C" void Gimbal_Task(void *argument)
         //CAN_Send(0x1FE, 1500, 1500, 1500, 1500); // 给电机2发Spdout
         int16_t out = yaw.Axiscontrol();
      int16_t out_ = pitch.Axiscontrol();
-        CAN_Send(0x1FE, out_, out, 0, 0);
+        //CAN_Send(0x1FE, out_, out, 0, 0);
 
         vTaskDelayUntil(&CurrentTime, 2/ portTICK_RATE_MS); 
     }// 每2ms执行一次（500Hz）

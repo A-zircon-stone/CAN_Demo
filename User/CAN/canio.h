@@ -19,6 +19,7 @@ typedef struct {
 extern GM6020_Feedback_t motor2;
 extern GM6020_Feedback_t motor1;
 extern volatile int16_t board_angle2;
+extern volatile int16_t board_angle4;
 void CAN_Init();
 void CAN_Send(int16_t ID, int16_t Mess_1, int16_t Mess_2, int16_t Mess_3, int16_t Mess_4);
 void CAN_Receive(GM6020_Feedback_t *feedback,GM6020_Feedback_t *feedback2);
