@@ -20,17 +20,21 @@ class Gimbal_Axis
 
         angle_min = 0;
         angle_max = 8191;
-        pid_.PID_Init(&pid_.PosParam, 0.3f, 0.005f, 0.0f);
-        pid_.PID_Init(&pid_.SpdParam, 20.0f, 0.002f, 0.0f);
-        pid_.PosParam.PID_OutMax = 150;
+        pid_.PID_Init(&pid_.PosParam, 0.1f, 0.005f, 0.0f);
+        pid_.PID_Init(&pid_.SpdParam, 5.0f, 0.002f, 0.0f);
+        pid_.PosParam.PID_OutMax = 2000;
         pid_.PosParam.PID_OutStep = 5;
         pid_.PosParam.PID_ErrAllMax = 20000;
         pid_.PosParam.PID_Precision = 5;
 
-        pid_.SpdParam.PID_OutMax = 2000;
+        pid_.SpdParam.PID_OutMax = 8000;
         pid_.SpdParam.PID_OutStep = 1500;
-        pid_.SpdParam.PID_ErrAllMax = 10000;
+        pid_.SpdParam.PID_ErrAllMax = 20000;
         pid_.SpdParam.PID_Precision = 2;
+        speed_mode = false;
+        speed_cmd = 0;
+        speed_dir = 1;
+        pid_.PID_Clear();
     }
 
      int16_t get_angle()
@@ -109,7 +113,8 @@ int16_t Axiscontrol()
         if (target<angle_min) target=angle_min;
         int16_t actual=feedback->Angle;
         int16_t error=angleError(target,actual);
-        target_speed=(int16_t )pid_.SingleLoop_PID(&pid_.PosParam,0.0f ,error);
+        // 双环之间保留浮点目标速度，仅在最终 CAN 指令处取整。
+        target_speed=pid_.SingleLoop_PID(&pid_.PosParam,0.0f ,error);
         int16_t Spdout=(int16_t )pid_.SingleLoop_PID(&pid_.SpdParam,feedback->Speed,target_speed);
         return Spdout;
     }
@@ -138,6 +143,7 @@ return (int16_t )pid_ .SingleLoop_PID(&pid_.SpdParam ,(float )feedback ->Speed,(
 }
 
     int16_t get_target_angle() const { return target_angle; }
+    float get_target_speed() const { return target_speed; }
 
 
 private:
@@ -149,9 +155,9 @@ private:
         return error;
     }
     private:
-    GM6020_Feedback_t *feedback;
+    GM6020_Feedback_t *feedback = nullptr;
     int16_t target_angle;
-    int16_t target_speed;
+    float target_speed;
     int16_t angle_max;
     int16_t angle_min;
     int16_t actual_speed;

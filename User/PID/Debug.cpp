@@ -5,6 +5,8 @@
 #include "GimbalAxis.hpp"
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
+#include <cerrno>
 
 #define TX_BUF_SIZE 512
 #define RX_BUF_SIZE 64
@@ -12,7 +14,7 @@
 static uint8_t send_buf[TX_BUF_SIZE];
 static uint8_t uart1_rx_buf[RX_BUF_SIZE];
 static volatile uint8_t uart1_tx_busy = 0;
-volatile uint8_t g_protected_mode = 0;
+volatile uint8_t g_protected_mode = 1; // 上电保持零指令，Normal Mode 后才接受运动命令。
 
 void uart1_rx_start(void)
 {
@@ -48,47 +50,66 @@ static void uart1_parse_rx(const uint8_t *data, uint16_t len)
     }
     *end = '\0';
 
-    int value = 0;
-    int yaw_spd = 0;
-    int pitch_spd = 0;
-
     if (strcmp(p, "Protected Mode") == 0 || strcmp(p, "protected mode") == 0)
     {
         g_protected_mode = 1;
-        yaw.emergency_stop();
-        pitch.emergency_stop();
+        motor2_current_setpoint = 0;
+        motor2_position_mode = 0;
+        ++motor2_command_revision;
     }
     else if (strcmp(p, "Normal Mode") == 0 || strcmp(p, "normal mode") == 0)
     {
+        motor2_current_setpoint = 0;
+        motor2_position_mode = 0;
+        ++motor2_command_revision;
         g_protected_mode = 0;
+    }
+    else if (strcmp(p, "nn=learn") == 0 || strcmp(p, "nn=freeze") == 0 ||
+             strcmp(p, "nn=off") == 0 || strcmp(p, "nn=reset") == 0)
+    {
+        // 这些命令只控制观察器，不启动运动，也不改变 PID 或目标角度。
+        if (strcmp(p, "nn=learn") == 0)
+            motor2_neural_mode = NeuralMode::Learn;
+        else if (strcmp(p, "nn=freeze") == 0)
+            motor2_neural_mode = NeuralMode::Frozen;
+        else
+            motor2_neural_mode = NeuralMode::Off;
+        if (strcmp(p, "nn=reset") == 0)
+            ++motor2_neural_reset_revision;
+        ++motor2_neural_revision;
     }
     else if (g_protected_mode)
     {
         return;
     }
-    else if (sscanf(p, "spd %d %d", &yaw_spd, &pitch_spd) == 2)
+    else if (strncmp(p, "angle=", 6) == 0)
     {
-        yaw.set_speed_cmd((int16_t)yaw_spd);
-        pitch.set_speed_cmd((int16_t)pitch_spd);
-
-        yaw.set_speed_mode(true);
-        pitch.set_speed_mode(true);
+        char *number_end;
+        errno = 0;
+        const long value = strtol(p + 6, &number_end, 10);
+        if (number_end == p + 6 || *number_end != '\0' || errno == ERANGE ||
+            value < 0 || value > 8191)
+        {
+            return;
+        }
+        motor2_target_angle = static_cast<int16_t>(value);
+        motor2_current_setpoint = 0;
+        motor2_position_mode = 1;
+        ++motor2_command_revision;
     }
-    else if (strcmp(p, "pos") == 0)
+    else if (strncmp(p, "current=", 8) == 0)
     {
-        yaw.set_target_angle(yaw.get_angle());
-        pitch.set_target_angle(pitch.get_angle());
-
-        yaw.set_speed_mode(false);
-        pitch.set_speed_mode(false);
-    }
-    else if (sscanf(p, "yaw:%d", &value) == 1 || sscanf(p, "yaw=%d", &value) == 1)
-    {
-        yaw.set_target_angle((int16_t)value);
-    }
-    else if (sscanf(p, "pitch:%d", &value) == 1 || sscanf(p, "pitch=%d", &value) == 1)
-    {
-        pitch.set_target_angle((int16_t)value);
+        char *number_end;
+        errno = 0;
+        const long value = strtol(p + 8, &number_end, 10);
+        if (number_end == p + 8 || *number_end != '\0' || errno == ERANGE ||
+            value < -16384 || value > 16384)
+        {
+            return;
+        }
+        motor2_current_setpoint = (int16_t)value;
+        motor2_position_mode = 0;
+        ++motor2_command_revision;
     }
     
 }

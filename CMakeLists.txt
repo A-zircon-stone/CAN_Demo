@@ -19,7 +19,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Set the project name
-set(CMAKE_PROJECT_NAME CAN_Demo)
+set(CMAKE_PROJECT_NAME NeuralNetworkPidDemo)
 
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -39,6 +39,8 @@ add_executable(${CMAKE_PROJECT_NAME}
         User/Timer/timer.h
         User/PID/PID.cpp
         User/PID/PID.hpp
+        User/PID/RbfNetwork.hpp
+        User/PID/MotorObserver.hpp
         User/Task/Gimbal.cpp
         User/Task/Print.cpp
         User/PID/Debug.cpp

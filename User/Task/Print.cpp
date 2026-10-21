@@ -1,65 +1,41 @@
-#include "board.hpp"
 #include "FreeRTOS.h"
 #include "task.h"
-#include "usart.h"
-#include "string.h"
 #include "Debug.hpp"
 #include "canio.h"
-#include "GimbalAxis.hpp"
-extern Gimbal_Axis yaw;
-extern Gimbal_Axis pitch;
-extern volatile int16_t g_spdout;
-/* 串口打印任务：每20ms执行一次（50Hz） */
-extern "C" void Printf_Task(void * argument)
+
+/* 25Hz 显示控制与预测快照，给 115200 波特率预留带宽。 */
+extern "C" void Printf_Task(void *argument)
 {
-    portTickType CurrentTime;
-    /* Infinite loop */
-    for(;;)
+    (void)argument;
+    TickType_t lastWakeTime = xTaskGetTickCount();
+
+    for (;;)
     {
-        CurrentTime = xTaskGetTickCount();  //读取当前时间下tick
+        taskENTER_CRITICAL();
+        const GimbalDebugSnapshot state = motor2_debug;
+        taskEXIT_CRITICAL();
 
-        //usart_printf("pid:%d,%d,%d,%d,%d\r\n",
-                     // 200,
-                     // (int)motor2.Speed,
-                     // (int)g_spdout,
-                     // (int)motor2.Current,
-                     // (int)motor2.Angle);
-        //char uint8_t unsighed char?好吧不太懂这些类型。。。
-      //usart_printf("RM2027\r\n");
-        // usart_printf("%d,%d,%d,%d,%d,%d,%d,%d\r\n",
-        //       yaw.get_target_angle(),
-        //       yaw.get_angle(),
-        //       pitch.get_target_angle(),
-        //       pitch.get_angle(),
-        //       yaw.get_actual_speed(),
-        //       pitch.get_actual_speed(),
-        //       yaw.Axiscontrol(),
-        //       pitch.Axiscontrol()
-        //
-        //
-        //       );
+        const char *mode = state.protected_mode ? "STOP" :
+                           (state.position_mode ? "POS" : "CURRENT");
+        const char *neural_mode = state.neural.mode == NeuralMode::Learn ? "LEARN" :
+                                  (state.neural.mode == NeuralMode::Frozen ? "FROZEN" : "OFF");
+        usart_printf("M2 ms=%lu Mode=%s Fresh=%u Target=%d Angle=%d Vref100=%ld Speed=%d Out=%d Current=%d Temp=%u NN=%s Valid=%u Pred100=%ld Obs100=%ld Err100=%ld MAE100=%ld Base100=%ld Eval=%lu N=%lu Skip=%lu\r\n",
+                     static_cast<unsigned long>(state.time_ms), mode,
+                     static_cast<unsigned int>(state.feedback_fresh),
+                     static_cast<int>(state.target_angle), static_cast<int>(state.angle),
+                     static_cast<long>(state.target_speed_x100), static_cast<int>(state.speed),
+                     static_cast<int>(state.output_current), static_cast<int>(state.measured_current),
+                     static_cast<unsigned int>(state.temperature), neural_mode,
+                     static_cast<unsigned int>(state.neural.valid),
+                     static_cast<long>(state.neural.predicted_speed * 100.0f),
+                     static_cast<long>(state.neural.actual_speed * 100.0f),
+                     static_cast<long>(state.neural.error * 100.0f),
+                     static_cast<long>(state.neural.mae * 100.0f),
+                     static_cast<long>(state.neural.baseline_mae * 100.0f),
+                     static_cast<unsigned long>(state.neural.evaluated),
+                     static_cast<unsigned long>(state.neural.updates),
+                     static_cast<unsigned long>(state.neural.skipped));
 
-        // usart_printf("%d\r\n",
-        //
-        //      motor1.Angle);
-
-
-        int16_t send_angle_cdeg = 1234;
-        int16_t send_rad_mrad   = 215;
-
-        if (BOARD_ROLE == BOARD_ROLE_MASTER)
-        {
-            CAN_Send(BoardHello, 0, 0, 0, 0);
-            CAN_Send(Board_Angle1, send_angle_cdeg, 0, 0, 0);
-            CAN_Send(Board_Angle3, send_rad_mrad, 0, 0, 0);
-        }
-
-        usart_printf("link:%u, angle_send=%d, rad_recv=%d, rad_send=%d, angle_recv=%d\r\n",
-                     board_link_ok,
-                     send_angle_cdeg,
-                     board_angle2,
-                     send_rad_mrad,
-                     board_angle4);
-        vTaskDelayUntil(&CurrentTime, 20/ portTICK_RATE_MS);  //每20ms执行一次（50Hz）
+        vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(40));
     }
 }

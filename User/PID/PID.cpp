@@ -9,6 +9,7 @@
 */
 void PIDc::PID_Init(PID_t *WhichPID,float Kp,float Ki,float Kd)
 { //初始化PID的默认参数
+    *WhichPID = {}; // 重新初始化时也清除积分、历史误差和输出。
     WhichPID->Kp1 = Kp;
     WhichPID->Ki1 = Ki;
     WhichPID->Kd1 = Kd;

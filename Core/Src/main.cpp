@@ -20,6 +20,7 @@ extern "C" void MX_FREERTOS_Init(void);
 extern "C" {
 GM6020_Feedback_t motor2;
 GM6020_Feedback_t motor1;
+GM6020_Feedback_t motor3;
 }
 
 
@@ -45,7 +46,7 @@ int main(void)
 
   
   osKernelInitialize();   // 初始化 FreeRTOS 内核
-   MX_FREERTOS_Init();     // 创建任务
+  MX_FREERTOS_Init();     // 创建电流控制和反馈打印任务
   osKernelStart();        // 启动调度器（之后不再返回）
 
   /* Infinite loop */
@@ -63,7 +64,10 @@ int main(void)
     //  HAL_GPIO_TogglePin(GPIOH,GPIO_PIN_10);
     // CAN_Send(0x1FE, 0, 1500, 0, 0);
     // HAL_Delay(30);
+    usart_printf("hello\r\n"
 
+                     );
+    HAL_Delay(100);
 
 
   }

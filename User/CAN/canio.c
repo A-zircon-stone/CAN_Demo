@@ -9,6 +9,8 @@
 extern CAN_HandleTypeDef hcan1;
 volatile int16_t board_angle2 = 0;
 volatile int16_t board_angle4 = 0;
+volatile uint32_t motor2_feedback_count = 0;
+volatile uint32_t motor2_feedback_ms = 0;
 
 void CAN_Init()
 {
@@ -27,10 +29,10 @@ void CAN_Init()
     HAL_CAN_Start(&hcan1);
     HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 }
-void CAN_Send(int16_t ID, int16_t Mess_1, int16_t Mess_2, int16_t Mess_3, int16_t Mess_4)
+uint8_t CAN_Send(int16_t ID, int16_t Mess_1, int16_t Mess_2, int16_t Mess_3, int16_t Mess_4)
 {
     uint32_t Send_Mailbox=0;//硬件发送邮箱？不太懂
-    CAN_TxHeaderTypeDef TxHeader;//发送头结构体
+    CAN_TxHeaderTypeDef TxHeader = {0};//初始化包括 TransmitGlobalTime 在内的所有字段
     TxHeader.IDE = CAN_ID_STD;//标准帧
     TxHeader.RTR = CAN_RTR_DATA;//数据帧  控制帧是请求？
     TxHeader.DLC = 8;
@@ -45,7 +47,7 @@ void CAN_Send(int16_t ID, int16_t Mess_1, int16_t Mess_2, int16_t Mess_3, int16_
     CAN_Tx_Mess[6]=Mess_4>>8;
     CAN_Tx_Mess[7]=Mess_4;
 
-    HAL_CAN_AddTxMessage(&hcan1, &TxHeader, CAN_Tx_Mess, &Send_Mailbox);//调用hal发送函数
+    return HAL_CAN_AddTxMessage(&hcan1, &TxHeader, CAN_Tx_Mess, &Send_Mailbox) == HAL_OK;
 }
 
 void CAN_Receive(GM6020_Feedback_t *feedback,GM6020_Feedback_t *feedback2)
@@ -53,7 +55,10 @@ void CAN_Receive(GM6020_Feedback_t *feedback,GM6020_Feedback_t *feedback2)
 
     CAN_RxHeaderTypeDef RxHeader;
     uint8_t CAN_Rx_Mess[8];
-    HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, CAN_Rx_Mess);
+    if (HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, CAN_Rx_Mess) != HAL_OK)
+        return;
+    if (RxHeader.IDE != CAN_ID_STD || RxHeader.RTR != CAN_RTR_DATA || RxHeader.DLC != 8)
+        return;
 
     uint16_t ID = RxHeader.StdId;
 
@@ -64,6 +69,8 @@ void CAN_Receive(GM6020_Feedback_t *feedback,GM6020_Feedback_t *feedback2)
         feedback->Speed       = (int16_t)((CAN_Rx_Mess[2] << 8) | CAN_Rx_Mess[3]);
         feedback->Current     = (int16_t)((CAN_Rx_Mess[4] << 8) | CAN_Rx_Mess[5]);
         feedback->Temperature = CAN_Rx_Mess[6];
+        motor2_feedback_ms = HAL_GetTick();
+        ++motor2_feedback_count;
         break;
     case Motor_1:
         feedback2->Angle       = (int16_t)((CAN_Rx_Mess[0] << 8) | CAN_Rx_Mess[1]);
