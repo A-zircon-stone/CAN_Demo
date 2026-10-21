@@ -1,0 +1,4 @@
+E:/STM32Projects/CAN_Demo/User/Task/GimbalAxis.hpp:12:7:Gimbal_Axis::Gimbal_Axis()	16	static
+E:/STM32Projects/CAN_Demo/User/Task/Gimbal.cpp:12:17:void Gimbal_Task(void*)	32	static
+E:/STM32Projects/CAN_Demo/User/Task/Gimbal.cpp:26:1:void __static_initialization_and_destruction_0()	8	static
+E:/STM32Projects/CAN_Demo/User/Task/Gimbal.cpp:26:1:cpp)	8	static

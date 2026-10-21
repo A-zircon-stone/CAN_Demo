@@ -1,0 +1,8 @@
+{
+	"InstallScripts" : 
+	[
+		"E:/STM32Projects/CAN_Demo/verify-build/cmake_install.cmake",
+		"E:/STM32Projects/CAN_Demo/verify-build/cmake/stm32cubemx/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

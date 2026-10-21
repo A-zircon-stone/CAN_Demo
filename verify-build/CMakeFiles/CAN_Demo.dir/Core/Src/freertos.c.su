@@ -1,0 +1,4 @@
+E:/STM32Projects/CAN_Demo/Core/Src/freertos.c:88:6:MX_FREERTOS_Init	8	static
+E:/STM32Projects/CAN_Demo/Core/Src/freertos.c:136:6:StartDefaultTask	16	static
+E:/STM32Projects/CAN_Demo/Core/Src/freertos.c:154:13:Gimbal_Task	16	static
+E:/STM32Projects/CAN_Demo/Core/Src/freertos.c:172:13:Printf_Task	16	static

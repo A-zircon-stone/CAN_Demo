@@ -1,0 +1,4 @@
+E:/STM32Projects/CAN_Demo/User/CAN/canio.c:13:6:CAN_Init	48	static
+E:/STM32Projects/CAN_Demo/User/CAN/canio.c:30:6:CAN_Send	64	static
+E:/STM32Projects/CAN_Demo/User/CAN/canio.c:51:6:CAN_Receive	56	static
+E:/STM32Projects/CAN_Demo/User/CAN/canio.c:131:6:HAL_CAN_RxFifo0MsgPendingCallback	16	static
